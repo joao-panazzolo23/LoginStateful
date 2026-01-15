@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:login_stateful/src/bloc/bloc.dart';
+import 'package:login_stateful/src/bloc/provider.dart';
 import '../mixins/validations_mixins.dart';
 
 class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
   @override
   State<StatefulWidget> createState() {
     return LoginScreenState();
@@ -19,25 +22,27 @@ class LoginScreenState extends State<LoginScreen> with Validators {
 
   @override
   Widget build(context) {
+    final bloc = Provider.of(context);
+
+    var child = [
+      emailField(bloc),
+      passwordField(bloc),
+      Container(margin: EdgeInsets.only(top: 25.0)),
+      submitButton(bloc),
+    ];
+
     return Container(
       margin: EdgeInsets.all(20.0),
       child: Form(
         key: formKey,
-        child: Column(
-          children: [
-            emailField(),
-            passwordField(),
-            Container(margin: EdgeInsets.only(top: 25.0)),
-            submitButton(),
-          ],
-        ),
+        child: Column(children: child),
       ),
     );
   }
 
-  Widget emailField() {
+  Widget emailField(Bloc bloc) {
     return StreamBuilder(
-      stream: bloc.email,
+      stream: Provider.of(context).email,
       //this is anon func
       builder: (context, snapshot) {
         return TextFormField(
@@ -53,7 +58,7 @@ class LoginScreenState extends State<LoginScreen> with Validators {
     );
   }
 
-  Widget passwordField() {
+  Widget passwordField(Bloc bloc) {
     return StreamBuilder(
       stream: bloc.password,
       //this is anon func
@@ -71,26 +76,30 @@ class LoginScreenState extends State<LoginScreen> with Validators {
     );
   }
 
-  Widget submitButton() {
-    return ElevatedButton(
-      onPressed: () {
-        //reset -> clear the form
-        //print(formKey.currentState?.validate());
-        if (formKey.currentState?.validate() ?? false) {
-          formKey.currentState?.save();
-          print("Email and password posted successfully!");
-          //if the form is valid, save the values
-          //this one only works in scaffold
-          // ScaffoldMessenger.of(context).showSnackBar(
-          //   SnackBar(content: Text("Form submitted successfully!")),
-          // );
-        }
+  Widget submitButton(Bloc bloc) {
+    var style = ElevatedButton.styleFrom(
+      backgroundColor: Colors.blue,
+      foregroundColor: Colors.white,
+    );
+
+    return StreamBuilder(
+      stream: bloc.submitValid,
+      builder: (context, snapshot) {
+        return ElevatedButton(
+          //null makes button disabled
+          //onPressed: snapshot.hasError ? login : null, reverse logic
+          onPressed: snapshot.hasData ? bloc.submit : null,
+          style: style,
+          child: Text("Login"),
+        );
       },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.blue,
-        foregroundColor: Colors.white,
-      ),
-      child: Text("Submit"),
     );
   }
+  //
+  // void login() {
+  //   if (formKey.currentState?.validate() ?? false) {
+  //     formKey.currentState?.save();
+  //     print("IT WORKS!!!");
+  //   }
+  // }
 }
